@@ -319,7 +319,7 @@ def render_pathogen_kpi_equation(row: pd.Series):
     st.caption("Visual logic: Level, Trend, and Jump are combined, then the result is moderated by Reliability to produce the final Hotspot score.")
 
 
-def render_pathogen_history_chart(hist: pd.DataFrame):
+def render_pathogen_history_chart(hist: pd.DataFrame, key_prefix: str = "pathogen_hist"):
     display_map = {
         "current_value": "Current Value",
         "level_score": "Level Score",
@@ -340,7 +340,7 @@ def render_pathogen_history_chart(hist: pd.DataFrame):
             "Metric 1",
             metric_options,
             index=metric_options.index(default_metric_1),
-            key="pathogen_hist_metric_1",
+            key=f"{key_prefix}_metric_1",
         )
     metric_2_options = [m for m in metric_options if m != metric_1]
     with col_b:
@@ -349,7 +349,7 @@ def render_pathogen_history_chart(hist: pd.DataFrame):
             "Metric 2",
             metric_2_options,
             index=fallback_index,
-            key="pathogen_hist_metric_2",
+            key=f"{key_prefix}_metric_2",
         )
 
     selected_pretty = [metric_1, metric_2]
@@ -724,12 +724,8 @@ def render_pathogen_upload_popover():
                 pasted_df = pd.read_csv(io.StringIO(pasted))
                 hist2, latest2 = score_pathogen_series(pasted_df)
                 st.success(f"Preview hotspot: {latest2['hotspot_score']:.1f} ({alert_band(float(latest2['hotspot_score']))})")
-                mcols = st.columns(5)
-                mcols[0].metric("Level", f"{latest2['level_score']:.1f}")
-                mcols[1].metric("Trend", f"{latest2['trend_score']:.1f}")
-                mcols[2].metric("Jump", f"{latest2['jump_score']:.1f}")
-                mcols[3].metric("Reliability", f"{latest2['reliability_score']:.1f}")
-                mcols[4].metric("Hotspot", f"{latest2['hotspot_score']:.1f}")
+                render_pathogen_kpi_equation(latest2)
+                render_pathogen_history_chart(hist2, key_prefix="pathogen_upload_hist")
                 st.dataframe(hist2.tail(10), use_container_width=True, height=220)
             except Exception as exc:
                 st.error(f"Could not parse or score the pasted pathogen CSV: {exc}")
